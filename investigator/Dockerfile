@@ -12,6 +12,7 @@ RUN apt-get -y upgrade
 # TODO Fix metapackage tagging when I push my docker image on the docker hub
 # RUN apt-get -y install kali-linux-${KALI_METAPACKAGE}
 # RUN apt install seclists
+RUN apt-get install -y nmap
 RUN apt-get clean
 
 # Install kali desktop
@@ -40,7 +41,7 @@ RUN apt-get install iputils-ping
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
-RUN dos2unix /entrypoint.sh
+#RUN dos2unix /entrypoint.sh
 
 #ENTRYPOINT [ "dos2unix /entrypoint.sh" ]
 ENTRYPOINT [ "/entrypoint.sh" ]
