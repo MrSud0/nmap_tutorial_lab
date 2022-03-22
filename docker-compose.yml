@@ -1,0 +1,98 @@
+# Documentation: https://github.com/compose-spec/compose-spec/blob/master/spec.md
+# Purpose: Build local containers for the Mutillidae environment
+
+version: '3.7'
+services:
+
+  database:
+    image: webpwnized/mutillidae:database
+    build:
+        context: ./database
+        dockerfile: Dockerfile
+    networks:
+      - datanet
+
+  database_admin:
+    depends_on:
+      - database
+    image: webpwnized/mutillidae:database_admin
+    build:
+        context: ./database_admin
+        dockerfile: Dockerfile
+    ports:
+      - 127.0.0.1:81:80
+    networks:
+      - datanet
+
+  www:
+    depends_on:
+      - database
+      - directory
+    image: webpwnized/mutillidae:www
+    build:
+        context: ./www
+        dockerfile: Dockerfile
+    ports:
+      - 127.0.0.1:80:80
+      - 127.0.0.1:443:443
+    networks:
+      - datanet
+      - ldapnet
+      - public
+
+  directory:
+    image: webpwnized/mutillidae:ldap
+    build:
+        context: ./ldap
+        dockerfile: Dockerfile
+    volumes:
+      - ldap_data:/var/lib/ldap
+      - ldap_config:/etc/ldap/slapd.d
+    networks:
+      - ldapnet
+
+  directory_admin:
+    depends_on:
+      - directory
+    image: webpwnized/mutillidae:ldap_admin
+    build:
+        context: ./ldap_admin
+        dockerfile: Dockerfile
+    ports:
+      - 127.0.0.1:82:80
+    networks:
+      - ldapnet
+
+  investigator:
+    image: city-investigator
+    stdin_open: true
+    tty: true
+    #entrypoint: ./entrypoint.sh
+    build:
+      context: ./investigator
+      dockerfile: Dockerfile
+      args:
+        #KALI_METAPACKAGE: top10
+        KALI_DESKTOP: xfce
+    # volumes:
+    #   - investigator_data:/root
+    #   - investigator_postgres:/var/lib/postgresql
+    ports:
+      - 127.0.0.1:9020:8080
+      - 127.0.0.1:19025:5900
+      - 127.0.0.1:18889:8000
+    restart: always
+    networks:
+      - public
+
+volumes:
+  ldap_data:
+  ldap_config:
+  investigator_data:
+  investigator_postgres:
+
+# Create network segments for the containers to use
+networks:
+    datanet:
+    ldapnet:
+    public:
